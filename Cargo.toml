@@ -1,0 +1,21 @@
+[package]
+name = "serverless-lando"
+version = "0.1.0"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+name = "lambda"
+
+[dependencies]
+base64 = "0.9"
+cpython = "0.1"
+futures = "0.1"
+envy = "0.3"
+http = "0.1"
+lando = "0.1"
+rusoto_s3 = "0.33"
+rusoto_core = "0.33"
+serde_derive = "1.0"
+serde = "1.0"
+

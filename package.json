@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "serverless": "^1.30.3",
+    "serverless-plugin-tracing": "^2.0.0",
+    "serverless-rust": "^0.1.6"
+  },
+  "name": "bazel-s3-cache"
+}
