@@ -38,6 +38,7 @@ functions:
     events:
       - http:
           path: '/'
+          method: any
 resources:
   Resources:
     Cache:
