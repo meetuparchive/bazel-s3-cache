@@ -17,7 +17,7 @@ use std::time::Duration;
 
 use futures::future::Future;
 use http::header::{AUTHORIZATION, LOCATION};
-use http::Method;
+use http::{Method, StatusCode};
 use lando::Response;
 use rusoto_core::credential::{AwsCredentials, ChainProvider, ProvideAwsCredentials};
 use rusoto_s3::util::PreSignedRequest;
@@ -68,11 +68,11 @@ where
 
 /// Return true if provided authz header matches config
 fn authenticated(config: &Config, authz: &str) -> bool {
-    let payload = match &authz.split_whitespace().collect::<Vec<_>>()[..] {
-        ["Basic", payload] => payload.clone(),
+    let encoded = match &authz.split_whitespace().collect::<Vec<_>>()[..] {
+        ["Basic", encoded] => encoded.clone(),
         _ => return false,
     };
-    base64::decode(payload)
+    base64::decode(encoded)
         .ok()
         .into_iter()
         .filter_map(|bytes| String::from_utf8(bytes).ok())
@@ -95,12 +95,12 @@ gateway!(|request, _| {
         .filter(|authz| authenticated(&config, authz.to_str().unwrap_or_default()))
         .is_none()
     {
-        return Ok(Response::builder().status(401).body(())?);
+        return Ok(Response::builder().status(StatusCode::UNAUTHORIZED).body(())?);
     }
 
     match request.method() {
         &Method::GET | &Method::PUT => Ok(Response::builder()
-            .status(307)
+            .status(StatusCode::TEMPORARY_REDIRECT)
             .header(
                 LOCATION,
                 match request.method() {
@@ -123,13 +123,13 @@ gateway!(|request, _| {
                 config.bucket,
                 request.uri().path().into(),
             ) {
-                200
+                StatusCode::OK
             } else {
-                404
+                StatusCode::NOT_FOUND
             };
             Ok(Response::builder().status(status).body(())?)
         }
-        _ => Ok(Response::builder().status(405).body(())?),
+        _ => Ok(Response::builder().status(StatusCode::METHOD_NOT_ALLOWED).body(())?),
     }
 });
 
