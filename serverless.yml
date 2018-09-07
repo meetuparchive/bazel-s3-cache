@@ -17,7 +17,7 @@ provider:
    - Effect: Allow
      Action:
       - "s3:*"
-     Resource: { "Fn::Join": ["", ["arn:aws:s3:::", { "Ref": "[Cache]" }, "/*" ] ] }
+     Resource: { "Fn::Join": ["", ["arn:aws:s3:::", { "Ref": "Cache" }, "/*" ] ] }
   environment:
     BUCKET: '${self:custom.bucket}'
     USERNAME: '${env:USERNAME}'
