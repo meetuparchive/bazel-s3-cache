@@ -83,12 +83,10 @@ fn authenticated(config: &Config, authz: &str) -> bool {
             username, password, ..
         } = config;
         let decoded_str = String::from_utf8(decoded).unwrap_or_default();
-        let split = decoded_str.split(':').collect::<Vec<_>>();
-        if split.len() != 2 {
-            return false;
-        }
-        let (user, pass) = (split[0], split[1]);
-        return user == username && pass == password;
+        return match &decoded_str.split(':').collect::<Vec<_>>()[..] {
+            [user, pass] if user == username && pass == password => true,
+            _ => false,
+        };
     }
     false
 }
@@ -98,7 +96,7 @@ gateway!(|request, _| {
     if request
         .headers()
         .get(AUTHORIZATION)
-        .filter(|authz| authenticated(&config, authz.to_str()?))
+        .filter(|authz| authenticated(&config, authz.to_str().unwrap_or_default()))
         .is_none()
     {
         return Ok(Response::builder().status(401).body(())?);
