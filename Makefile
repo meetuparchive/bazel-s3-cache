@@ -33,5 +33,5 @@ destroy: ## Destroy application
 logs: ## Fetches a stream of logs
 	@echo "fetching function logs..."
 	@./node_modules/.bin/serverless \
-		logs -f hello \
+		logs -f cache \
 		--stage $(STAGE)
