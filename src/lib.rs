@@ -52,6 +52,22 @@ fn put(bucket: String, key: String, credentials: &AwsCredentials) -> String {
     }.get_presigned_url(&Default::default(), &credentials)
 }
 
+fn head<C>(client: C, bucket: String, key: String) -> u16
+where
+    C: S3,
+{
+    client
+        .head_object(HeadObjectRequest {
+            bucket,
+            key,
+            ..Default::default()
+        })
+        .sync()
+        .ok()
+        .map(|_| 200)
+        .unwrap_or(404)
+}
+
 /// Return true if provided authz header matches config
 fn authenticated(config: &Config, authz: &str) -> bool {
     let split = authz.split_whitespace().collect::<Vec<_>>();
@@ -108,16 +124,11 @@ gateway!(|request, _| {
             )
             .body(())?),
         &Method::HEAD => {
-            let status = S3Client::new(Default::default())
-                .head_object(HeadObjectRequest {
-                    bucket: config.bucket,
-                    key: request.uri().path().into(),
-                    ..Default::default()
-                })
-                .sync()
-                .ok()
-                .map(|_| 200)
-                .unwrap_or(404);
+            let status = head(
+                S3Client::new(Default::default()),
+                config.bucket,
+                request.uri().path().into(),
+            );
             Ok(Response::builder().status(status).body(())?)
         }
         _ => Ok(Response::builder().status(405).body(())?),
