@@ -8,11 +8,11 @@ provider:
     'mup:productName': '${self:service}'
   tracing: true
   iamRoleStatements:
-    - Effect: Allow
-      Action:
-        - 'xray:PutTraceSegments'
-        - 'xray:PutTelemetryRecords'
-      Resource:
+   - Effect: Allow
+    Action:
+      - 'xray:PutTraceSegments'
+      - 'xray:PutTelemetryRecords'
+    Resource:
         - '*'
    - Effect: "Allow"
      Action: "s3:*"
