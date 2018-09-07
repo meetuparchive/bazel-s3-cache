@@ -69,14 +69,10 @@ where
 
 /// Return true if provided authz header matches config
 fn authenticated(config: &Config, authz: &str) -> bool {
-    let split = authz.split_whitespace().collect::<Vec<_>>();
-    if split.len() != 2 {
-        return false;
-    }
-    let (typ, payload) = (split[0], split[1]);
-    if typ != "Basic" {
-        return false;
-    }
+    let payload = match &authz.split_whitespace().collect::<Vec<_>>()[..] {
+        ["Basic", payload] => payload.clone(),
+        _ => return false,
+    };
     if let Some(decoded) = base64::decode(payload).ok() {
         let Config {
             username, password, ..
