@@ -84,7 +84,7 @@ fn authenticated(config: &Config, authz: &str) -> bool {
         } = config;
         let decoded_str = String::from_utf8(decoded).unwrap_or_default();
         return match &decoded_str.split(':').collect::<Vec<_>>()[..] {
-            [user, pass] if user == username && pass == password => true,
+            [user, pass] => user == username && pass == password,
             _ => false,
         };
     }
