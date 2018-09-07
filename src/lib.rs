@@ -63,8 +63,7 @@ where
             ..Default::default()
         })
         .sync()
-        .map(|_| true)
-        .unwrap_or_default()
+        .is_ok()
 }
 
 /// Return true if provided authz header matches config
