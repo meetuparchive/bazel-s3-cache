@@ -9,13 +9,14 @@ provider:
   tracing: true
   iamRoleStatements:
    - Effect: Allow
-    Action:
+     Action:
       - 'xray:PutTraceSegments'
       - 'xray:PutTelemetryRecords'
-    Resource:
-        - '*'
-   - Effect: "Allow"
-     Action: "s3:*"
+     Resource:
+      - '*'
+   - Effect: Allow
+     Action:
+      - "s3:*"
      Resource: { "Fn::Join": ["", ["arn:aws:s3:::", { "Ref": "[Cache]" }, "/*" ] ] }
   environment:
     BUCKET: '${self:custom.bucket}'
