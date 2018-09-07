@@ -63,7 +63,6 @@ where
             ..Default::default()
         })
         .sync()
-        .ok()
         .map(|_| 200)
         .unwrap_or(404)
 }
