@@ -52,7 +52,7 @@ fn put(bucket: String, key: String, credentials: &AwsCredentials) -> String {
     }.get_presigned_url(&Default::default(), &credentials)
 }
 
-fn head<C>(client: C, bucket: String, key: String) -> u16
+fn exists<C>(client: C, bucket: String, key: String) -> bool
 where
     C: S3,
 {
@@ -63,8 +63,8 @@ where
             ..Default::default()
         })
         .sync()
-        .map(|_| 200)
-        .unwrap_or(404)
+        .map(|_| true)
+        .unwrap_or_default()
 }
 
 /// Return true if provided authz header matches config
@@ -119,11 +119,15 @@ gateway!(|request, _| {
             )
             .body(())?),
         &Method::HEAD => {
-            let status = head(
+            let status = if exists(
                 S3Client::new(Default::default()),
                 config.bucket,
                 request.uri().path().into(),
-            );
+            ) {
+                200
+            } else {
+                404
+            };
             Ok(Response::builder().status(status).body(())?)
         }
         _ => Ok(Response::builder().status(405).body(())?),
