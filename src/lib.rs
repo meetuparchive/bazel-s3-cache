@@ -73,16 +73,19 @@ fn authenticated(config: &Config, authz: &str) -> bool {
         ["Basic", payload] => payload.clone(),
         _ => return false,
     };
-    base64::decode(payload).ok().into_iter().any(|bytes| {
-        let Config {
-            username, password, ..
-        } = config;
-        let decoded = String::from_utf8(bytes).unwrap_or_default();
-        match &decoded.split(':').collect::<Vec<_>>()[..] {
-            [user, pass] => user == username && pass == password,
-            _ => false,
-        }
-    })
+    base64::decode(payload)
+        .ok()
+        .into_iter()
+        .filter_map(|bytes| String::from_utf8(bytes).ok())
+        .any(|decoded| {
+            let Config {
+                username, password, ..
+            } = config;
+            match &decoded.split(':').collect::<Vec<_>>()[..] {
+                [user, pass] => user == username && pass == password,
+                _ => false,
+            }
+        })
 }
 
 gateway!(|request, _| {
