@@ -79,42 +79,48 @@ fn authenticated(config: &Config, authz: &str) -> bool {
 
 gateway!(|request, _| {
     let config = envy::from_env::<Config>()?;
-    match request.headers().get(AUTHORIZATION) {
-        Some(authz) if authenticated(&config, authz.to_str()?) => match request.method() {
-            &Method::GET | &Method::PUT => Ok(Response::builder()
-                .status(307)
-                .header(
-                    LOCATION,
-                    match request.method() {
-                        &Method::GET => get(
-                            config.bucket,
-                            request.uri().path().into(),
-                            &credentials().credentials().wait()?,
-                        ),
-                        _ => put(
-                            config.bucket,
-                            request.uri().path().into(),
-                            &credentials().credentials().wait()?,
-                        ),
-                    },
-                )
-                .body(())?),
-            &Method::HEAD => {
-                let status = S3Client::new(Default::default())
-                    .head_object(HeadObjectRequest {
-                        bucket: config.bucket,
-                        key: request.uri().path().into(),
-                        ..Default::default()
-                    })
-                    .sync()
-                    .ok()
-                    .map(|_| 200)
-                    .unwrap_or(404);
-                Ok(Response::builder().status(status).body(())?)
-            }
-            _ => Ok(Response::builder().status(405).body(())?),
-        },
-        _ => Ok(Response::builder().status(401).body(())?),
+    if request
+        .headers()
+        .get(AUTHORIZATION)
+        .filter(|authz| authenticated(&config, authz.to_str()?))
+        .is_none()
+    {
+        return Ok(Response::builder().status(401).body(())?);
+    }
+
+    match request.method() {
+        &Method::GET | &Method::PUT => Ok(Response::builder()
+            .status(307)
+            .header(
+                LOCATION,
+                match request.method() {
+                    &Method::GET => get(
+                        config.bucket,
+                        request.uri().path().into(),
+                        &credentials().credentials().wait()?,
+                    ),
+                    _ => put(
+                        config.bucket,
+                        request.uri().path().into(),
+                        &credentials().credentials().wait()?,
+                    ),
+                },
+            )
+            .body(())?),
+        &Method::HEAD => {
+            let status = S3Client::new(Default::default())
+                .head_object(HeadObjectRequest {
+                    bucket: config.bucket,
+                    key: request.uri().path().into(),
+                    ..Default::default()
+                })
+                .sync()
+                .ok()
+                .map(|_| 200)
+                .unwrap_or(404);
+            Ok(Response::builder().status(status).body(())?)
+        }
+        _ => Ok(Response::builder().status(405).body(())?),
     }
 });
 
