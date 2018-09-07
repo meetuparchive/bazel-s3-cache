@@ -14,15 +14,14 @@ provider:
         - 'xray:PutTelemetryRecords'
       Resource:
         - '*'
+   - Effect: "Allow"
+     Action: "s3:*"
+     Resource: { "Fn::Join": ["", ["arn:aws:s3:::", { "Ref": "[Cache]" }, "/*" ] ] }
   environment:
     BUCKET: '${self:custom.bucket}'
     USERNAME: '${env:USERNAME}'
     PASSWORD: '${env:PASSWORD}'
-  iamRoleStatements:
-      - Effect: "Allow"
-        Action: "s3:*"
-        Resource: { "Fn::Join": ["", ["arn:aws:s3:::", { "Ref": "[Cache]" }, "/*" ] ] }
-
+     
 plugins:
   - serverless-plugin-tracing
   - serverless-rust
