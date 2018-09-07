@@ -42,13 +42,13 @@ functions:
         - liblambda.so
     events:
       - http:
-          path: '/'
+          path: '/{any+}'
           method: get
       - http:
-          path: '/'
+          path: '/{any+}'
           method: head
       - http:
-          path: '/'
+          path: '/{any+}'
           method: put
 resources:
   Resources:
