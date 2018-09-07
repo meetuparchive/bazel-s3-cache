@@ -43,7 +43,13 @@ functions:
     events:
       - http:
           path: '/'
-          method: any
+          method: get
+      - http:
+          path: '/'
+          method: head
+      - http:
+          path: '/'
+          method: put
 resources:
   Resources:
     Cache:
