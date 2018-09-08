@@ -67,12 +67,15 @@ where
 }
 
 /// Return true if provided authz header matches config
-fn authenticated(config: &Config, authz: &str) -> bool {
-    let encoded = match &authz.split_whitespace().collect::<Vec<_>>()[..] {
-        ["Basic", encoded] => encoded.clone(),
-        _ => return false,
-    };
-    base64::decode(encoded)
+fn authenticated(config: &Config, authz: &[u8]) -> bool {
+    if authz
+        .get(..6)
+        .filter(|prefix| prefix == b"Basic ")
+        .is_none()
+    {
+        return false;
+    }
+    base64::decode(&authz[6..])
         .ok()
         .into_iter()
         .filter_map(|bytes| String::from_utf8(bytes).ok())
@@ -92,10 +95,12 @@ gateway!(|request, _| {
     if request
         .headers()
         .get(AUTHORIZATION)
-        .filter(|authz| authenticated(&config, authz.to_str().unwrap_or_default()))
+        .filter(|authz| authenticated(&config, authz.as_bytes()))
         .is_none()
     {
-        return Ok(Response::builder().status(StatusCode::UNAUTHORIZED).body(())?);
+        return Ok(Response::builder()
+            .status(StatusCode::UNAUTHORIZED)
+            .body(())?);
     }
 
     match request.method() {
@@ -129,7 +134,9 @@ gateway!(|request, _| {
             };
             Ok(Response::builder().status(status).body(())?)
         }
-        _ => Ok(Response::builder().status(StatusCode::METHOD_NOT_ALLOWED).body(())?),
+        _ => Ok(Response::builder()
+            .status(StatusCode::METHOD_NOT_ALLOWED)
+            .body(())?),
     }
 });
 
@@ -145,7 +152,7 @@ mod tests {
                 password: "bar".into(),
                 ..Default::default()
             },
-            "test"
+            "test".as_bytes()
         ))
     }
 
@@ -157,7 +164,7 @@ mod tests {
                 password: "bar".into(),
                 ..Default::default()
             },
-            "Basic Zm9vOmJhcg=="
+            "Basic Zm9vOmJhcg==".as_bytes()
         ))
     }
 }
