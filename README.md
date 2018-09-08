@@ -19,8 +19,7 @@ This is a rust application deployed using ⚡ [serverless](https://serverless.co
 
 > 💡 To install serverless, run `make dependencies`
 
-This lambda is configured through its environment variables. Most of these have a default. `GITHUB_TOKEN` must be provided. Optional support for posting a slack message to
-reviewers is supported by providing a `SLACK_TOKEN`
+This lambda is configured through its environment variables.
 
 | Name          | Description                                      |
 |---------------|--------------------------------------------------|
