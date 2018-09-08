@@ -142,7 +142,33 @@ gateway!(|request, _| {
 
 #[cfg(test)]
 mod tests {
-    use super::{authenticated, Config};
+    use super::{authenticated, get, put, Config};
+    use http::Uri;
+    use rusoto_core::credential::AwsCredentials;
+
+    #[test]
+    fn get_link() {
+        let link: Uri = get(
+            "foo".into(),
+            "bar".into(),
+            &AwsCredentials::new("boom", "zoom", Default::default(), Default::default()),
+        ).parse()
+            .unwrap();
+        assert_eq!(Some("s3.amazonaws.com"), link.host());
+        assert_eq!("/foo/bar", link.path());
+    }
+
+    #[test]
+    fn put_link() {
+        let link: Uri = put(
+            "foo".into(),
+            "bar".into(),
+            &AwsCredentials::new("boom", "zoom", Default::default(), Default::default()),
+        ).parse()
+            .unwrap();
+        assert_eq!(Some("s3.amazonaws.com"), link.host());
+        assert_eq!("/foo/bar", link.path());
+    }
 
     #[test]
     fn authenticated_rejects_invalid_requests() {
