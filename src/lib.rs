@@ -157,6 +157,18 @@ mod tests {
     }
 
     #[test]
+    fn authenticated_rejects_partially_valid_requests() {
+        assert!(!authenticated(
+            &Config {
+                username: "foo".into(),
+                password: "bar".into(),
+                ..Default::default()
+            },
+            "Basic Zm9v".as_bytes()
+        ))
+    }
+
+    #[test]
     fn authenticated_permits_valid_requests() {
         assert!(authenticated(
             &Config {
