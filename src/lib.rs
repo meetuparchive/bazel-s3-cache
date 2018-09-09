@@ -12,9 +12,14 @@ extern crate base64;
 extern crate envy;
 extern crate futures;
 extern crate http;
+#[cfg(test)]
+extern crate url;
+
+// Std lib
 
 use std::time::Duration;
 
+// Third party
 use futures::future::Future;
 use http::header::{AUTHORIZATION, LOCATION};
 use http::{Method, StatusCode};
@@ -142,9 +147,12 @@ gateway!(|request, _| {
 
 #[cfg(test)]
 mod tests {
-    use super::{authenticated, get, put, Config};
+
     use http::Uri;
     use rusoto_core::credential::AwsCredentials;
+    use url::form_urlencoded;
+
+    use super::{authenticated, get, put, Config};
 
     #[test]
     fn get_link() {
@@ -156,6 +164,11 @@ mod tests {
             .unwrap();
         assert_eq!(Some("s3.amazonaws.com"), link.host());
         assert_eq!("/foo/bar", link.path());
+        assert!(
+            form_urlencoded::parse(link.query().unwrap().as_bytes())
+                .into_iter()
+                .any(|(k, _)| k.starts_with("X-Amz-"))
+        );
     }
 
     #[test]
@@ -168,6 +181,11 @@ mod tests {
             .unwrap();
         assert_eq!(Some("s3.amazonaws.com"), link.host());
         assert_eq!("/foo/bar", link.path());
+        assert!(
+            form_urlencoded::parse(link.query().unwrap().as_bytes())
+                .into_iter()
+                .any(|(k, _)| k.starts_with("X-Amz-"))
+        );
     }
 
     #[test]
