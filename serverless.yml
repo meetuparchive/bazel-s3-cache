@@ -22,7 +22,7 @@ provider:
     BUCKET: '${self:custom.bucket}'
     USERNAME: '${env:USERNAME}'
     PASSWORD: '${env:PASSWORD}'
-     
+
 plugins:
   - serverless-plugin-tracing
   - serverless-rust
@@ -56,3 +56,7 @@ resources:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: ${self:custom.bucket}
+        BucketEncryption:
+          ServerSideEncryptionConfiguration:
+            - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
