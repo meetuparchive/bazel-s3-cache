@@ -3,6 +3,7 @@ provider:
   name: aws
   runtime: python3.6
   memorySize: 128
+  stage: ${opt:stage, 'dev'}
   stackTags:
     'mup:owner': 'core-services'
     'mup:productName': '${self:service}'
