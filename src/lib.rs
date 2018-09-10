@@ -28,6 +28,8 @@ use rusoto_core::credential::{AwsCredentials, ChainProvider, ProvideAwsCredentia
 use rusoto_s3::util::PreSignedRequest;
 use rusoto_s3::{GetObjectRequest, HeadObjectRequest, PutObjectRequest, S3, S3Client};
 
+const AUTH_PREFIX: &[u8] = b"Basic ";
+
 #[derive(Deserialize, Default)]
 struct Config {
     bucket: String,
@@ -74,13 +76,13 @@ where
 /// Return true if provided authz header matches config
 fn authenticated(config: &Config, authz: &[u8]) -> bool {
     if authz
-        .get(..6)
-        .filter(|prefix| prefix == b"Basic ")
+        .get(..AUTH_PREFIX.len())
+        .filter(|prefix| prefix == &AUTH_PREFIX)
         .is_none()
     {
         return false;
     }
-    base64::decode(&authz[6..])
+    base64::decode(&authz[AUTH_PREFIX.len()..])
         .ok()
         .into_iter()
         .filter_map(|bytes| String::from_utf8(bytes).ok())
