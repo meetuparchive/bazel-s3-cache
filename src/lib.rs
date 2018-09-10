@@ -75,11 +75,7 @@ where
 
 /// Return true if provided authz header matches config
 fn authenticated(config: &Config, authz: &[u8]) -> bool {
-    if authz
-        .get(..AUTH_PREFIX.len())
-        .filter(|prefix| prefix == &AUTH_PREFIX)
-        .is_none()
-    {
+    if !authz.starts_with(&AUTH_PREFIX) {
         return false;
     }
     base64::decode(&authz[AUTH_PREFIX.len()..])
