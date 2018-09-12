@@ -7,10 +7,10 @@ language: rust
 
 # improve ci turnaround time
 cache:
-  cargo: true
   apt: true
   directories:
     - node_modules
+    - /home/travis/.cargo
 
 services:
   # start docker to enable lambda ci compatible build env
