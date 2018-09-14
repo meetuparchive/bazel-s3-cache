@@ -24,8 +24,8 @@ addons:
       - libssl-dev
 
 install: |
-  if [[ "$TRAVIS_RUST_VERSION" == stable ]] && [[ $(cargo tarpaulin --version) != *0.6.2 ]]; then
-    `RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install  --force --version 0.6.2  cargo-tarpaulin`
+  if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
+    `RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin`
   fi
 
 script:
