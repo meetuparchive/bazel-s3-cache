@@ -93,6 +93,14 @@ fn authenticated(config: &Config, authz: &[u8]) -> bool {
         })
 }
 
+fn key(path: &str) -> &str {
+    if path.starts_with('/') {
+        &path[1..]
+    } else {
+        path
+    }
+}
+
 gateway!(|request, _| {
     let config = envy::from_env::<Config>()?;
     if request
@@ -114,12 +122,12 @@ gateway!(|request, _| {
                 match request.method() {
                     &Method::GET => get(
                         config.bucket,
-                        request.uri().path().into(),
+                        key(request.uri().path()).into(),
                         &credentials().credentials().wait()?,
                     ),
                     _ => put(
                         config.bucket,
-                        request.uri().path().into(),
+                        key(request.uri().path()).into(),
                         &credentials().credentials().wait()?,
                     ),
                 },
@@ -129,7 +137,7 @@ gateway!(|request, _| {
             let status = if exists(
                 S3Client::new(Default::default()),
                 config.bucket,
-                request.uri().path().into(),
+                key(request.uri().path()).into(),
             ) {
                 StatusCode::OK
             } else {
@@ -150,7 +158,17 @@ mod tests {
     use rusoto_core::credential::AwsCredentials;
     use url::form_urlencoded;
 
-    use super::{authenticated, get, put, Config};
+    use super::{authenticated, get, key, put, Config};
+
+    #[test]
+    fn key_strips_prefix_slash() {
+        assert_eq!(key("/foo/bar"), "foo/bar")
+    }
+
+    #[test]
+    fn key_left_as_is_without_prefix_slash() {
+        assert_eq!(key("foo/bar"), "foo/bar")
+    }
 
     #[test]
     fn get_link() {
