@@ -86,7 +86,7 @@ fn authenticated(config: &Config, authz: &[u8]) -> bool {
             let Config {
                 username, password, ..
             } = config;
-            match &decoded.split(':').collect::<Vec<_>>()[..] {
+            match &decoded.splitn(2, ':').collect::<Vec<_>>()[..] {
                 [user, pass] => user == username && pass == password,
                 _ => false,
             }
@@ -207,6 +207,18 @@ mod tests {
                 ..Default::default()
             },
             "Basic Zm9v".as_bytes()
+        ))
+    }
+
+    #[test]
+    fn authenticated_permits_valid_requests_with_passwords_containing_colon() {
+        assert!(authenticated(
+            &Config {
+                username: "foo".into(),
+                password: "bar:baz".into(),
+                ..Default::default()
+            },
+            "Basic Zm9vOmJhcjpiYXo=".as_bytes()
         ))
     }
 
