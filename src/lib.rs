@@ -48,7 +48,7 @@ fn get(bucket: String, key: String, credentials: &AwsCredentials) -> String {
         bucket,
         key,
         ..Default::default()
-    }.get_presigned_url(&Default::default(), &credentials)
+    }.get_presigned_url(&Default::default(), &credentials, &Default::default())
 }
 
 fn put(bucket: String, key: String, credentials: &AwsCredentials) -> String {
@@ -56,7 +56,7 @@ fn put(bucket: String, key: String, credentials: &AwsCredentials) -> String {
         bucket,
         key,
         ..Default::default()
-    }.get_presigned_url(&Default::default(), &credentials)
+    }.get_presigned_url(&Default::default(), &credentials, &Default::default())
 }
 
 fn exists<C>(client: C, bucket: String, key: String) -> bool
