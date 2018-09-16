@@ -5,6 +5,9 @@ sudo: required
 # see https://docs.travis-ci.com/user/languages/rust/
 language: rust
 
+rust:
+  - '1.28.0'
+
 # improve ci turnaround time
 cache:
   apt: true
@@ -23,9 +26,10 @@ addons:
       # required by tarpaulin code coverage tool
       - libssl-dev
 
+# https://github.com/xd009642/tarpaulin/issues/148#issuecomment-421549130
 install: |
   if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
-    `RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin`
+    `RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install --force --version 0.6.6 cargo-tarpaulin`
   fi
 
 script:
