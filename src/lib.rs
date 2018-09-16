@@ -174,12 +174,12 @@ mod tests {
     fn get_link() {
         let link: Uri = get(
             "foo".into(),
-            "bar".into(),
+            "bar/car".into(),
             &AwsCredentials::new("boom", "zoom", Default::default(), Default::default()),
         ).parse()
             .unwrap();
         assert_eq!(Some("s3.amazonaws.com"), link.host());
-        assert_eq!("/foo/bar", link.path());
+        assert_eq!("/foo/bar/car", link.path());
         assert!(
             form_urlencoded::parse(link.query().unwrap().as_bytes())
                 .into_iter()
@@ -191,12 +191,12 @@ mod tests {
     fn put_link() {
         let link: Uri = put(
             "foo".into(),
-            "bar".into(),
+            "bar/car".into(),
             &AwsCredentials::new("boom", "zoom", Default::default(), Default::default()),
         ).parse()
             .unwrap();
         assert_eq!(Some("s3.amazonaws.com"), link.host());
-        assert_eq!("/foo/bar", link.path());
+        assert_eq!("/foo/bar/car", link.path());
         assert!(
             form_urlencoded::parse(link.query().unwrap().as_bytes())
                 .into_iter()
