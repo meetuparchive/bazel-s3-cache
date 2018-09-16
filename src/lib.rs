@@ -112,8 +112,8 @@ gateway!(|request, _| {
     if request
         .headers()
         .get(AUTHORIZATION)
-        .filter(|authz| authenticated(&config, authz.as_bytes()))
-        .is_none()
+        .into_iter()
+        .any(|authz| authenticated(&config, authz.as_bytes()))
     {
         return Ok(Response::builder()
             .status(StatusCode::UNAUTHORIZED)
