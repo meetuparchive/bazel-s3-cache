@@ -21,7 +21,7 @@ use std::time::Duration;
 
 // Third party
 use futures::future::Future;
-use http::header::{AUTHORIZATION, CONTENT_TYPE, LOCATION};
+use http::header::{AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE, LOCATION};
 use http::{Method, StatusCode};
 use lando::Response;
 use rusoto_core::credential::{AwsCredentials, ChainProvider, ProvideAwsCredentials};
@@ -104,10 +104,11 @@ fn key(path: &str) -> &str {
 gateway!(|request, _| {
     let config = envy::from_env::<Config>()?;
     println!(
-        "recv {} {} {:?}",
+        "recv {} {} {:?} {:?}",
         request.method(),
         request.uri().path(),
-        request.headers().get(CONTENT_TYPE)
+        request.headers().get(CONTENT_TYPE),
+        request.headers().get(CONTENT_LENGTH)
     );
     if request
         .headers()
@@ -122,7 +123,7 @@ gateway!(|request, _| {
 
     match request.method() {
         &Method::GET | &Method::PUT => Ok(Response::builder()
-            .status(StatusCode::TEMPORARY_REDIRECT)
+            .status(StatusCode::FOUND)
             .header(
                 LOCATION,
                 match request.method() {
