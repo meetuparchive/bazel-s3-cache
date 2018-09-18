@@ -123,7 +123,7 @@ gateway!(|request, _| {
 
     match request.method() {
         &Method::GET | &Method::PUT => Ok(Response::builder()
-            .status(StatusCode::FOUND)
+            .status(StatusCode::MOVED_PERMANENTLY)
             .header(
                 LOCATION,
                 match request.method() {
