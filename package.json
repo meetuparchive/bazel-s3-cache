@@ -1,5 +1,5 @@
 {
-  "dev-dependencies": {
+  "devDependencies": {
     "serverless": "^1.37.1",
     "serverless-plugin-tracing": "^2.0.0",
     "serverless-rust": "^0.1.6"
