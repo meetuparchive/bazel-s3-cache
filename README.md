@@ -4,9 +4,12 @@
 
 ## 🤔 about
 
-Bazel is an input output machine. I can exploit the ability to avoid recompiling
-what input combinations have already been compiled using a [remote caching](https://docs.bazel.build/versions/master/remote-caching.html) server. This repo
-contains a serverless implementation of that protocol.
+Bazel is an input output machine. Bazel's exploits the ability to track consistent sets of inputs
+and their outputs to avoid rebuilding what input combinations have already been built using a [remote caching](https://docs.bazel.build/versions/master/remote-caching.html) server. This repository
+contains a serverless implementation of that protocol that uses AWS API gateway triggered lambda and s3 storage
+backend.
+
+> 💡 Note API Gateway's [constraints](https://docs.aws.amazon.com/apigateway/latest/developerguide/limits.html) when evaluating this implementation. For instance, API Gateway sets a hard `10MB` limit on HTTP PUT requests.
 
 ## 👩‍🏭 development
 

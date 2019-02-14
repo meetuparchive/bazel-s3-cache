@@ -21,7 +21,7 @@ use std::time::Duration;
 
 // Third party
 use futures::future::Future;
-use http::header::{AUTHORIZATION, LOCATION};
+use http::header::{AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE, LOCATION};
 use http::{Method, StatusCode};
 use lando::Response;
 use rusoto_core::credential::{AwsCredentials, ChainProvider, ProvideAwsCredentials};
@@ -48,7 +48,7 @@ fn get(bucket: String, key: String, credentials: &AwsCredentials) -> String {
         bucket,
         key,
         ..Default::default()
-    }.get_presigned_url(&Default::default(), &credentials)
+    }.get_presigned_url(&Default::default(), &credentials, &Default::default())
 }
 
 fn put(bucket: String, key: String, credentials: &AwsCredentials) -> String {
@@ -56,7 +56,7 @@ fn put(bucket: String, key: String, credentials: &AwsCredentials) -> String {
         bucket,
         key,
         ..Default::default()
-    }.get_presigned_url(&Default::default(), &credentials)
+    }.get_presigned_url(&Default::default(), &credentials, &Default::default())
 }
 
 fn exists<C>(client: C, bucket: String, key: String) -> bool
@@ -86,20 +86,35 @@ fn authenticated(config: &Config, authz: &[u8]) -> bool {
             let Config {
                 username, password, ..
             } = config;
-            match &decoded.split(':').collect::<Vec<_>>()[..] {
+            match &decoded.splitn(2, ':').collect::<Vec<_>>()[..] {
                 [user, pass] => user == username && pass == password,
                 _ => false,
             }
         })
 }
 
+fn key(path: &str) -> &str {
+    if path.starts_with('/') {
+        &path[1..]
+    } else {
+        path
+    }
+}
+
 gateway!(|request, _| {
     let config = envy::from_env::<Config>()?;
+    println!(
+        "recv {} {} {:?} {:?}",
+        request.method(),
+        request.uri().path(),
+        request.headers().get(CONTENT_TYPE),
+        request.headers().get(CONTENT_LENGTH)
+    );
     if request
         .headers()
         .get(AUTHORIZATION)
-        .filter(|authz| authenticated(&config, authz.as_bytes()))
-        .is_none()
+        .into_iter()
+        .any(|authz| authenticated(&config, authz.as_bytes()))
     {
         return Ok(Response::builder()
             .status(StatusCode::UNAUTHORIZED)
@@ -108,18 +123,18 @@ gateway!(|request, _| {
 
     match request.method() {
         &Method::GET | &Method::PUT => Ok(Response::builder()
-            .status(StatusCode::TEMPORARY_REDIRECT)
+            .status(StatusCode::MOVED_PERMANENTLY)
             .header(
                 LOCATION,
                 match request.method() {
                     &Method::GET => get(
                         config.bucket,
-                        request.uri().path().into(),
+                        key(request.uri().path()).into(),
                         &credentials().credentials().wait()?,
                     ),
                     _ => put(
                         config.bucket,
-                        request.uri().path().into(),
+                        key(request.uri().path()).into(),
                         &credentials().credentials().wait()?,
                     ),
                 },
@@ -129,7 +144,7 @@ gateway!(|request, _| {
             let status = if exists(
                 S3Client::new(Default::default()),
                 config.bucket,
-                request.uri().path().into(),
+                key(request.uri().path()).into(),
             ) {
                 StatusCode::OK
             } else {
@@ -150,18 +165,28 @@ mod tests {
     use rusoto_core::credential::AwsCredentials;
     use url::form_urlencoded;
 
-    use super::{authenticated, get, put, Config};
+    use super::{authenticated, get, key, put, Config};
+
+    #[test]
+    fn key_strips_prefix_slash() {
+        assert_eq!(key("/foo/bar"), "foo/bar")
+    }
+
+    #[test]
+    fn key_left_as_is_without_prefix_slash() {
+        assert_eq!(key("foo/bar"), "foo/bar")
+    }
 
     #[test]
     fn get_link() {
         let link: Uri = get(
             "foo".into(),
-            "bar".into(),
+            "bar/car".into(),
             &AwsCredentials::new("boom", "zoom", Default::default(), Default::default()),
         ).parse()
             .unwrap();
         assert_eq!(Some("s3.amazonaws.com"), link.host());
-        assert_eq!("/foo/bar", link.path());
+        assert_eq!("/foo/bar/car", link.path());
         assert!(
             form_urlencoded::parse(link.query().unwrap().as_bytes())
                 .into_iter()
@@ -173,12 +198,12 @@ mod tests {
     fn put_link() {
         let link: Uri = put(
             "foo".into(),
-            "bar".into(),
+            "bar/car".into(),
             &AwsCredentials::new("boom", "zoom", Default::default(), Default::default()),
         ).parse()
             .unwrap();
         assert_eq!(Some("s3.amazonaws.com"), link.host());
-        assert_eq!("/foo/bar", link.path());
+        assert_eq!("/foo/bar/car", link.path());
         assert!(
             form_urlencoded::parse(link.query().unwrap().as_bytes())
                 .into_iter()
@@ -207,6 +232,18 @@ mod tests {
                 ..Default::default()
             },
             "Basic Zm9v".as_bytes()
+        ))
+    }
+
+    #[test]
+    fn authenticated_permits_valid_requests_with_passwords_containing_colon() {
+        assert!(authenticated(
+            &Config {
+                username: "foo".into(),
+                password: "bar:baz".into(),
+                ..Default::default()
+            },
+            "Basic Zm9vOmJhcjpiYXo=".as_bytes()
         ))
     }
 
